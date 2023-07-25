@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "my_task" {
 
   container_definitions = jsonencode([{
     name = "my-container"
-    image = var.docker_image
+    image = "${var.docker_image_name}:${var.docker_image_tag}"
     portMappings = [{
       containerPort = var.container_port
       hostPort = var.container_port
