@@ -12,6 +12,20 @@ resource "aws_ecs_task_definition" "my_task" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn = aws_iam_role.ecs_task_role.arn
 
+  volume {
+    name = "app-storage"
+
+    efs_volume_configuration {
+      file_system_id          = aws_efs_file_system.app_storage.id
+      root_directory          = "/"
+      transit_encryption      = "ENABLED"
+      authorization_config {
+        access_point_id       = aws_efs_access_point.efs_access_point.id
+        iam                   = "ENABLED"
+      }
+    }
+  }
+
   container_definitions = jsonencode([{
     name = "my-container"
     image = "${var.docker_image_name}:${var.docker_image_tag}"
@@ -19,6 +33,11 @@ resource "aws_ecs_task_definition" "my_task" {
       containerPort = var.container_port
       hostPort = var.container_port
       protocol = "tcp"
+    }]
+    mountPoints  = [{
+      sourceVolume   = "app-storage"
+      containerPath  = "/data"
+      readOnly       = false
     }]
   }])
 }
