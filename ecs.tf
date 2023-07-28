@@ -36,7 +36,7 @@ resource "aws_ecs_task_definition" "my_task" {
     }]
     mountPoints  = [{
       sourceVolume   = "app-storage"
-      containerPath  = "/data"
+      containerPath  = "/app/data"
       readOnly       = false
     }]
   }])
