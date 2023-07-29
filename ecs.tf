@@ -1,9 +1,13 @@
-resource "aws_ecs_cluster" "my_cluster" {
-  name = "my-cluster"
+locals {
+  aws-credentials = jsondecode(data.aws_secretsmanager_secret_version.aws_credentials.secret_string)
 }
 
-resource "aws_ecs_task_definition" "my_task" {
-  family = "my-task"
+resource "aws_ecs_cluster" "app_cluster" {
+  name = "app-cluster"
+}
+
+resource "aws_ecs_task_definition" "app_task" {
+  family = "app-task"
   network_mode = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu = "256"
@@ -27,8 +31,20 @@ resource "aws_ecs_task_definition" "my_task" {
   }
 
   container_definitions = jsonencode([{
-    name = "my-container"
+    name = "app-container"
     image = "${var.docker_image_name}:${var.docker_image_tag}"
+
+    environment = [
+        {
+          name  = "AWS_ACCESS_KEY_ID"
+          value = local.aws-credentials.AWS_ACCESS_KEY_ID
+        },
+        {
+          name  = "AWS_SECRET_ACCESS_KEY"
+          value = local.aws-credentials.AWS_SECRET_ACCESS_KEY
+        }
+      ]
+    
     portMappings = [{
       containerPort = var.container_port
       hostPort = var.container_port
@@ -36,28 +52,35 @@ resource "aws_ecs_task_definition" "my_task" {
     }]
     mountPoints  = [{
       sourceVolume   = "app-storage"
-      containerPath  = "/app/data"
+      containerPath  = "/app/data/uploads"
       readOnly       = false
     }]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group = "c98-app-log-group"
+        awslogs-region = "us-east-1"
+        awslogs-stream-prefix = "c98-app-log-client"
+      }
+    }
   }])
 }
 
-resource "aws_ecs_service" "my_service" {
-  name = "my-service"
-  cluster = aws_ecs_cluster.my_cluster.id
-  task_definition = aws_ecs_task_definition.my_task.arn
+resource "aws_ecs_service" "app_service" {
+  name = "app-service"
+  cluster = aws_ecs_cluster.app_cluster.id
+  task_definition = aws_ecs_task_definition.app_task.arn
   desired_count = 1
   launch_type = "FARGATE"
 
   network_configuration {
-    subnets = aws_subnet.my_subnets.*.id
-    security_groups = [aws_security_group.my_sg.id]
-    assign_public_ip = true
+    subnets = aws_subnet.app_private_subnets.*.id
+    security_groups = [aws_security_group.ecs_sg.id]
   }
 
   load_balancer {
     target_group_arn = aws_lb_target_group.my_target_group.arn
-    container_name   = "my-container"
+    container_name   = "app-container"
     container_port   = var.container_port
   }
 }
@@ -101,4 +124,9 @@ resource "aws_iam_role" "ecs_task_role" {
        }
      ]
    })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_role_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.efs_policy.arn
 }
