@@ -4,11 +4,11 @@
 ## Architecture:
 ## CI/CD flow:
 - When we push the new code to main branch, the CI pipeline will automatically run: https://github.com/anhhoangta/c98-test/actions
-![Alt text](image-1.png)
+![Alt text](images/image-1.png)
 Once finished, it will push the docker image to the github artifactory: https://github.com/users/anhhoangta/packages/container/package/c98-test. We get the image tag to prepare for deploying to AWS.
-![Alt text](commit-hash.png)
+![Alt text](images/commithash.png)
 - You can check the pipeline CD in Github Actions of infrastructure repository: https://github.com/anhhoangta/c98-test-infra/actions/workflows/cd.yaml. Paste to the CD pipeline the commit hash that you decide to deploy.
-![Alt text](deploy-commithash.png)
+![Alt text](images/deploy-commithash.png)
 
 ## Prepare:
 - Clone c98-test and c98-test-infra repositories, open two terminal tabs inside the root directory of each. We'll name it as infra and app tab correspondingly.
@@ -26,7 +26,7 @@ git clone https://github.com/anhhoangta/c98-test-infra
         ```
         aws configure
         ```
-        ![Alt text](image.png)
+        ![Alt text](images/image.png)
     - Terraform: follow this docs https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
 
 
@@ -57,7 +57,7 @@ terraform plan
 terraform apply --auto-approve
 ```
 - The output in sucess case looks like that:
-![Alt text](deploy-terraform.png)
+![Alt text](images/deploy-terraform.png)
 - We can see three output values:
     - alb_dns_name: in real case, we'll assign a domain with the CNAME point to it and setup SSL also. Because of demonstration, we'll skip it. In our situation, we'll use it to test the application.
     - Get the rds_endpoint and redis_endpoint and update the credentials. We use these credentials for our application.
@@ -78,7 +78,7 @@ terraform apply -var="docker_image_tag=261ea4699a2d1214ca03e372b90f3037304d1bab"
 https://api.postman.com/collections/1072124-4ba56810-d416-4700-9214-decf7f00b7e1?access_key=PMAT-01H6KSJBECAAQWZJHC760W7V7M
 
 - Logs: you can access the ECS part in your AWS account to see the logs.
-![Alt text](image-3.png)
+![Alt text](images/image-3.png)
 
 ## Clean up
 Running these commands inside infra tab:
