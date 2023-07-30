@@ -2,6 +2,12 @@
  # Deploy infrastructure and application to AWS
 
 ## Architecture:
+![Alt text](images/architecture.png)
+- ALB: to distribute traffic to ECS tasks.
+- ECS with autoscaling to allow horizontal scaling. By default, the min=1, max=10 tasks.
+- Redis: cache for get file function to improve the performance. Cache technique is always hard, this is a simple implementation, in the real project we need to do a lot.
+- EFS: use to share the uploads folder between tasks. It's also the persistent volume solution. We can improve more by caching the image, video files in S3 and use CDN to enhance perfomance. We can also use S3 to store the uploaded files with many benefits.
+- AWS Secrets Manager: I use it fot sensitive information management. This is very important in reality case then I have to demo to use it.
 ## CI/CD flow:
 - When we push the new code to main branch, the CI pipeline will automatically run: https://github.com/anhhoangta/c98-test/actions
 ![Alt text](images/image-1.png)
@@ -28,10 +34,15 @@ git clone https://github.com/anhhoangta/c98-test-infra
         ```
         ![Alt text](images/image.png)
     - Terraform: follow this docs https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
-
+    - Docker and docker-compose: only for local development
 
 ## Run the CI:
 The CI pipeline will automatically run each time we push new code to main branch. After the CI finishing, we can check the result of Unittest and Code Coverage and Sonarqube test. If everything is OK, we'll pick the commit hash. We'll then use it as the image tag in the CD pipeline.
+
+For running the CI, we need to create some secrets inside the app repository:
+- SONAR_TOKEN: use for sonarqube. You can create an free account on https://sonarcloud.io/ then get the token.
+- GH_TOKEN: github token, we'll use it to login to ghcr.io, the github artifactory which we use to push the image
+- AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY: we'll pass it as env inside the docker image which the application need to interact with AWS via aws-sdk of nodejs.
 
 ## Deploy infrastructure:
 - Create credentials in aws secrets manager: I'm using AWS Secrets Manager to manage our credentials include: database, redis and aws access key. Run these commands in infra tab (only for the first time):
@@ -74,8 +85,15 @@ terraform apply -var="docker_image_tag=261ea4699a2d1214ca03e372b90f3037304d1bab"
 ```
 
 ## Testing:
-- API: Import this Postman's collection to make the test directly what I did. Or you can replace the url with your own one which get from above.
-https://api.postman.com/collections/1072124-4ba56810-d416-4700-9214-decf7f00b7e1?access_key=PMAT-01H6KSJBECAAQWZJHC760W7V7M
+- Local environment: In the app terminal tab, run this:
+```
+docker-compose up
+```
+And we can test the the app directly and quickly in local at http://localhost:3000
+
+- API: Import this Postman's collection to make the test directly what I did. Or you can replace the urls with your own one which get from above.
+    - https://api.postman.com/collections/1072124-4ba56810-d416-4700-9214-decf7f00b7e1?access_key=PMAT-01H6KSJBECAAQWZJHC760W7V7M
+    - https://www.dropbox.com/scl/fi/bpnza4dzyac708oi1bqh0/c98-test.postman_collection.json?dl=0&rlkey=be70qxy26ebu9mzm93enca604
 
 - Logs: you can access the ECS part in your AWS account to see the logs.
 ![Alt text](images/image-3.png)
