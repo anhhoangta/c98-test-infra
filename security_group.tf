@@ -82,3 +82,16 @@ resource "aws_security_group_rule" "rds_ingress" {
   protocol = "tcp"
   source_security_group_id = aws_security_group.ecs_sg.id
 }
+
+resource "aws_security_group" "redis-sg" {
+  name        = "redis-sg"
+  description = "Allow inbound traffic from ECS containers"
+  vpc_id      = aws_vpc.app_vpc.id
+
+  ingress {
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = "tcp"
+    security_groups = [aws_security_group.ecs_sg.id]
+  }
+}
