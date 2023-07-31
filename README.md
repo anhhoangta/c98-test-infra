@@ -92,7 +92,6 @@ docker-compose up
 And we can test the the app directly and quickly in local at http://localhost:3000
 
 - API: Import this Postman's collection to make the test directly what I did. Or you can replace the urls with your own one which get from above.
-    - https://api.postman.com/collections/1072124-4ba56810-d416-4700-9214-decf7f00b7e1?access_key=PMAT-01H6KSJBECAAQWZJHC760W7V7M
     - https://www.dropbox.com/scl/fi/bpnza4dzyac708oi1bqh0/c98-test.postman_collection.json?dl=0&rlkey=be70qxy26ebu9mzm93enca604
 
 - Logs: you can access the ECS part in your AWS account to see the logs.
